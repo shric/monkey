@@ -342,6 +342,32 @@ func TestStringLiteral(t *testing.T) {
 	}
 }
 
+func TestStringEquality(t *testing.T) {
+	input := `"Hello" == "Hello"`
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.Boolean)
+	if !ok {
+		t.Fatalf("object is not Boolean. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if !str.Value {
+		t.Errorf("Boolean has wrong value. got=%v", str.Value)
+	}
+}
+
+func TestStringInequality(t *testing.T) {
+	input := `"Hello" != "Hello"`
+	evaluated := testEval(input)
+	str, ok := evaluated.(*object.Boolean)
+	if !ok {
+		t.Fatalf("object is not Boolean. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if str.Value {
+		t.Errorf("Boolean has wrong value. got=%v", str.Value)
+	}
+}
+
 func TestStringConcatenation(t *testing.T) {
 	input := `"Hello" + " " + "World!"`
 
