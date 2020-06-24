@@ -252,6 +252,17 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
+var numericSuffixMultipliers = map[string]int64{
+	"KB":  1000,
+	"KiB": 1 << 10,
+	"MB":  1000000,
+	"MiB": 1 << 20,
+	"GB":  1000000000,
+	"GiB": 1 << 30,
+	"TB":  1000000000000,
+	"TiB": 1 << 40,
+}
+
 func (p *Parser) parseIntegerLiteral() ast.Expression {
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
@@ -260,6 +271,16 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
 		p.errors = append(p.errors, msg)
 		return nil
+	}
+	if p.peekTokenIs(token.NUMERIC_SUFFIX) {
+		p.nextToken()
+		if val, ok := numericSuffixMultipliers[p.curToken.Literal]; ok {
+			value *= val
+		} else {
+			msg := fmt.Sprintf("Unhandled integet suffix #{p.curToken.Literal}")
+			p.errors = append(p.errors, msg)
+			return nil
+		}
 	}
 
 	lit.Value = value

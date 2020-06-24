@@ -28,6 +28,8 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"3 * 3 * 3 + 10", 37},
 		{"3 * (3 * 3) + 10", 37},
 		{"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
+		{"10 KiB", 10240},
+		{"10 KB", 10000},
 	}
 
 	for _, tt := range tests {

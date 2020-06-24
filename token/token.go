@@ -48,6 +48,8 @@ const (
 	IF       = "IF"
 	ELSE     = "ELSE"
 	RETURN   = "RETURN"
+
+	NUMERIC_SUFFIX = "NUMERIC_SUFFIX"
 )
 
 type Token struct {
@@ -65,8 +67,22 @@ var keywords = map[string]TokenType{
 	"return": RETURN,
 }
 
+var numericSuffixes = map[string]TokenType{
+	"KB":  NUMERIC_SUFFIX,
+	"KiB": NUMERIC_SUFFIX,
+	"MB":  NUMERIC_SUFFIX,
+	"MiB": NUMERIC_SUFFIX,
+	"GB":  NUMERIC_SUFFIX,
+	"GiB": NUMERIC_SUFFIX,
+	"TB":  NUMERIC_SUFFIX,
+	"TiB": NUMERIC_SUFFIX,
+}
+
 func LookupIdent(ident string) TokenType {
 	if tok, ok := keywords[ident]; ok {
+		return tok
+	}
+	if tok, ok := numericSuffixes[ident]; ok {
 		return tok
 	}
 	return IDENT
