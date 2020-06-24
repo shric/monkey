@@ -2,8 +2,8 @@ package evaluator
 
 import (
 	"fmt"
-	"monkey/ast"
-	"monkey/object"
+	"github.com/shric/monkey/ast"
+	"github.com/shric/monkey/object"
 )
 
 var (

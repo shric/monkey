@@ -1,9 +1,9 @@
 package evaluator
 
 import (
-	"monkey/lexer"
-	"monkey/object"
-	"monkey/parser"
+	"github.com/shric/monkey/lexer"
+	"github.com/shric/monkey/object"
+	"github.com/shric/monkey/parser"
 	"testing"
 )
 

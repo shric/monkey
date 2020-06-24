@@ -2,8 +2,8 @@ package parser
 
 import (
 	"fmt"
-	"monkey/ast"
-	"monkey/lexer"
+	"github.com/shric/monkey/ast"
+	"github.com/shric/monkey/lexer"
 	"testing"
 )
 
