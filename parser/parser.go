@@ -2,15 +2,18 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/shric/monkey/ast"
 	"github.com/shric/monkey/lexer"
 	"github.com/shric/monkey/token"
-	"strconv"
 )
 
 const (
 	_ int = iota
 	LOWEST
+	OR          // ||
+	AND         // &&
 	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
@@ -21,6 +24,8 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
+	token.AND:      AND,
+	token.OR:       OR,
 	token.EQ:       EQUALS,
 	token.NOT_EQ:   EQUALS,
 	token.LT:       LESSGREATER,
@@ -78,6 +83,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.AND, p.parseInfixExpression)
+	p.registerInfix(token.OR, p.parseInfixExpression)
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)

@@ -1,10 +1,11 @@
 package evaluator
 
 import (
+	"testing"
+
 	"github.com/shric/monkey/lexer"
 	"github.com/shric/monkey/object"
 	"github.com/shric/monkey/parser"
-	"testing"
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
@@ -59,6 +60,14 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"(1 < 2) == false", false},
 		{"(1 > 2) == true", false},
 		{"(1 > 2) == false", true},
+		{"true && true", true},
+		{"true && false", false},
+		{"false && true", false},
+		{"false && false", false},
+		{"true || true", true},
+		{"true || false", true},
+		{"false || true", true},
+		{"false || false", false},
 	}
 
 	for _, tt := range tests {
