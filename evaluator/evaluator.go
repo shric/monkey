@@ -254,6 +254,9 @@ func evalIntegerInfixExpression(
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}
 	case "/":
+		if rightVal == 0 {
+			return newError("Integer division by zero: %d/0", leftVal)
+		}
 		return &object.Integer{Value: leftVal / rightVal}
 	case "<":
 		return nativeBoolToBooleanObject(leftVal < rightVal)
