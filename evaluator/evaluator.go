@@ -200,15 +200,16 @@ func evalInfixExpression(
 }
 
 func evalBangOperatorExpression(right object.Object) object.Object {
-	switch right {
-	case TRUE:
-		return FALSE
-	case FALSE:
-		return TRUE
-	case NULL:
-		return TRUE
+	if right == nil {
+		return newError("Only boolean and integer supported for ! operator, got: null")
+	}
+	switch v := right.(type) {
+	case *object.Boolean:
+		return nativeBoolToBooleanObject(!v.Value)
+	case *object.Integer:
+		return nativeBoolToBooleanObject(v.Value == 0)
 	default:
-		return FALSE
+		return newError("Only boolean supported for ! operator, got: %s", right.Type())
 	}
 }
 
