@@ -1,8 +1,9 @@
 package ast
 
 import (
-	"github.com/shric/monkey/token"
 	"testing"
+
+	"github.com/shric/monkey/token"
 )
 
 func TestString(t *testing.T) {

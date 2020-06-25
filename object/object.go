@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"hash/fnv"
-	"github.com/shric/monkey/ast"
 	"strings"
+
+	"github.com/shric/monkey/ast"
 )
 
 type BuiltinFunction func(args ...Object) Object

@@ -2,8 +2,9 @@ package ast
 
 import (
 	"bytes"
-	"github.com/shric/monkey/token"
 	"strings"
+
+	"github.com/shric/monkey/token"
 )
 
 // The base Node interface

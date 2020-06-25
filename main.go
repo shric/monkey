@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/shric/monkey/repl"
 	"os"
 	"os/user"
+
+	"github.com/shric/monkey/repl"
 )
 
 func main() {

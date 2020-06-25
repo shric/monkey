@@ -2,9 +2,10 @@ package parser
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/shric/monkey/ast"
 	"github.com/shric/monkey/lexer"
-	"testing"
 )
 
 func TestLetStatements(t *testing.T) {
