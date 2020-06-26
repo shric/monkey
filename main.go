@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"os/user"
+
+	"github.com/shric/monkey/object"
 
 	"github.com/shric/monkey/repl"
 )
@@ -16,5 +17,6 @@ func main() {
 	fmt.Printf("Hello %s! This is the Monkey programming language!\n",
 		user.Username)
 	fmt.Printf("Feel free to type in commands\n")
-	repl.Start(os.Stdin, os.Stdout)
+	env := object.NewEnvironment()
+	repl.Start(env)
 }

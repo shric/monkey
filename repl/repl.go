@@ -1,10 +1,10 @@
 package repl
 
 import (
-	"bufio"
-	"fmt"
 	"io"
+	"os"
 
+	"github.com/c-bata/go-prompt"
 	"github.com/shric/monkey/evaluator"
 	"github.com/shric/monkey/lexer"
 	"github.com/shric/monkey/object"
@@ -13,53 +13,38 @@ import (
 
 const PROMPT = ">> "
 
-func Start(in io.Reader, out io.Writer) {
-	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
-
-	for {
-		fmt.Fprintf(out, PROMPT)
-		scanned := scanner.Scan()
-		if !scanned {
-			return
-		}
-
-		line := scanner.Text()
-		l := lexer.New(line)
+func executor(env *object.Environment) func(string) {
+	return func(in string) {
+		l := lexer.New(in)
 		p := parser.New(l)
 
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
-			printParserErrors(out, p.Errors())
-			continue
+			printParserErrors(os.Stdout, p.Errors())
+			return
 		}
 
 		evaluated := evaluator.Eval(program, env)
 		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
+			io.WriteString(os.Stdout, evaluated.Inspect())
+			io.WriteString(os.Stdout, "\n")
 		}
 	}
 }
 
-const MONKEY_FACE = `            __,__
-   .--.  .-"     "-.  .--.
-  / .. \/  .-. .-.  \/ .. \
- | |  '|  /   Y   \  |'  | |
- | \   \  \ 0 | 0 /  /   / |
-  \ '- ,\.-"""""""-./, -' /
-   ''-' /_   ^ ^   _\ '-''
-       |  \._   _./  |
-       \   \ '~' /   /
-        '._ '-=-' _.'
-           '-----'
-`
+func Start(env *object.Environment) {
+	prom := prompt.New(executor(env), completer, prompt.OptionPrefix(PROMPT))
+	prom.Run()
+}
 
 func printParserErrors(out io.Writer, errors []string) {
-	io.WriteString(out, MONKEY_FACE)
-	io.WriteString(out, "Woops! We ran into some monkey business here!\n")
-	io.WriteString(out, " parser errors:\n")
+	io.WriteString(out, "Parser errors:\n")
 	for _, msg := range errors {
 		io.WriteString(out, "\t"+msg+"\n")
 	}
+}
+
+func completer(d prompt.Document) []prompt.Suggest {
+	s := []prompt.Suggest{}
+	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
