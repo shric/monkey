@@ -356,6 +356,26 @@ func TestStringLiteral(t *testing.T) {
 	}
 }
 
+func TestStringRegex(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{`"foo" ~ "foo"`, true},
+		{`"foobar" ~ "foo"`, true},
+		{`"foobar" ~ "bar"`, true},
+		{`"foo[123]+" ~ "foo12abc"`, false},
+		{`"foo[123]+" ~ "foo45abc"`, false},
+		{`"foo12abc" ~ "foo[123]+"`, true},
+		{`"foo45abc" ~ "foo[123]+"`, false},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
+}
+
 func TestStringEquality(t *testing.T) {
 	input := `"Hello" == "Hello"`
 	evaluated := testEval(input)

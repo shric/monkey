@@ -39,6 +39,8 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
+	case '~':
+		tok = newToken(token.REGEX, l.ch)
 	case '=':
 		if l.peekChar() == '=' {
 			ch := l.ch

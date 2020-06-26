@@ -22,6 +22,7 @@ const (
 	LT = "<"
 	GT = ">"
 
+	REGEX  = "~"
 	EQ     = "=="
 	NOT_EQ = "!="
 

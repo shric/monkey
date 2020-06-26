@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/shric/monkey/ast"
 	"github.com/shric/monkey/object"
@@ -285,6 +286,12 @@ func evalStringInfixExpression(
 		return &object.Boolean{Value: leftVal == rightVal}
 	case "!=":
 		return &object.Boolean{Value: leftVal != rightVal}
+	case "~":
+		re, err := regexp.Compile(rightVal)
+		if err != nil {
+			return newError("%v", err)
+		}
+		return nativeBoolToBooleanObject(re.MatchString(leftVal))
 	default:
 		return newError("unknown operator: %s %s %s",
 			left.Type(), operator, right.Type())
