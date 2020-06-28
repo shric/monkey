@@ -1,17 +1,22 @@
 package lexer
 
-import "github.com/shric/monkey/token"
+import (
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/shric/monkey/token"
+)
 
 type Lexer struct {
 	input        string
 	position     int  // current position in input (points to current char)
 	readPosition int  // current reading position in input (after current char)
-	ch           byte // current char under examination
+	ch           rune // current char under examination
 }
 
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
-	l.readChar()
+	l.readRune()
 	return l
 }
 
@@ -24,7 +29,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '|':
 		if l.peekChar() == '|' {
 			ch := l.ch
-			l.readChar()
+			l.readRune()
 			literal := string(ch) + string(l.ch)
 			tok = token.Token{Type: token.OR, Literal: literal}
 		} else {
@@ -33,7 +38,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '&':
 		if l.peekChar() == '&' {
 			ch := l.ch
-			l.readChar()
+			l.readRune()
 			literal := string(ch) + string(l.ch)
 			tok = token.Token{Type: token.AND, Literal: literal}
 		} else {
@@ -44,7 +49,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '=':
 		if l.peekChar() == '=' {
 			ch := l.ch
-			l.readChar()
+			l.readRune()
 			literal := string(ch) + string(l.ch)
 			tok = token.Token{Type: token.EQ, Literal: literal}
 		} else {
@@ -57,7 +62,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '!':
 		if l.peekChar() == '=' {
 			ch := l.ch
-			l.readChar()
+			l.readRune()
 			literal := string(ch) + string(l.ch)
 			tok = token.Token{Type: token.NOT_EQ, Literal: literal}
 		} else {
@@ -100,7 +105,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
-		} else if isDigit(l.ch) {
+		} else if unicode.IsDigit(l.ch) {
 			tok.Type = token.INT
 			tok.Literal = l.readNumber()
 			return tok
@@ -109,24 +114,25 @@ func (l *Lexer) NextToken() token.Token {
 		}
 	}
 
-	l.readChar()
+	l.readRune()
 	return tok
 }
 
 func (l *Lexer) skipWhitespace() {
 	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
-		l.readChar()
+		l.readRune()
 	}
 }
 
-func (l *Lexer) readChar() {
+func (l *Lexer) readRune() {
+	var size int
 	if l.readPosition >= len(l.input) {
 		l.ch = 0
 	} else {
-		l.ch = l.input[l.readPosition]
+		l.ch, size = utf8.DecodeRuneInString(l.input[l.readPosition:])
 	}
 	l.position = l.readPosition
-	l.readPosition += 1
+	l.readPosition += size
 }
 
 func (l *Lexer) peekChar() byte {
@@ -140,15 +146,15 @@ func (l *Lexer) peekChar() byte {
 func (l *Lexer) readIdentifier() string {
 	position := l.position
 	for isLetter(l.ch) {
-		l.readChar()
+		l.readRune()
 	}
 	return l.input[position:l.position]
 }
 
 func (l *Lexer) readNumber() string {
 	position := l.position
-	for isDigit(l.ch) {
-		l.readChar()
+	for unicode.IsDigit(l.ch) {
+		l.readRune()
 	}
 	return l.input[position:l.position]
 }
@@ -156,7 +162,7 @@ func (l *Lexer) readNumber() string {
 func (l *Lexer) readString() string {
 	position := l.position + 1
 	for {
-		l.readChar()
+		l.readRune()
 		if l.ch == '"' || l.ch == 0 {
 			break
 		}
@@ -164,14 +170,10 @@ func (l *Lexer) readString() string {
 	return l.input[position:l.position]
 }
 
-func isLetter(ch byte) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+func isLetter(ch rune) bool {
+	return unicode.IsLetter(ch) || ch == '_'
 }
 
-func isDigit(ch byte) bool {
-	return '0' <= ch && ch <= '9'
-}
-
-func newToken(tokenType token.TokenType, ch byte) token.Token {
+func newToken(tokenType token.TokenType, ch rune) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
 }
