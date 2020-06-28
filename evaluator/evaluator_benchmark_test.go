@@ -1,0 +1,25 @@
+package evaluator
+
+import (
+	"testing"
+)
+
+func BenchmarkEval(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		input := `
+let fibonacci = fn(x) {
+  if (x == 0) {
+    0
+  } else {
+    if (x == 1) {
+      return 1;
+    } else {
+      fibonacci(x - 1) + fibonacci(x - 2);
+    }
+  }
+}
+fibonacci(10)
+`
+		testEval(input)
+	}
+}
