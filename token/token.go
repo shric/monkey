@@ -1,64 +1,122 @@
 package token
 
-type TokenType string
+type Type int
 
 const (
-	ILLEGAL = "ILLEGAL"
-	EOF     = "EOF"
+	ILLEGAL = iota
+	EOF
 
 	// Identifiers + literals
-	IDENT  = "IDENT"  // add, foobar, x, y, ...
-	INT    = "INT"    // 1343456
-	STRING = "STRING" // "foobar"
+	IDENT  // add, foobar, x, y, ...
+	INT    // 1343456
+	STRING // "foobar"
 
 	// Operators
-	ASSIGN   = "="
-	PLUS     = "+"
-	MINUS    = "-"
-	BANG     = "!"
-	ASTERISK = "*"
-	SLASH    = "/"
+	ASSIGN   // =
+	PLUS     // +
+	MINUS    // -
+	BANG     // !
+	ASTERISK // *
+	SLASH    // /
 
-	LT = "<"
-	GT = ">"
+	LT // <
+	GT // >
 
-	REGEX  = "~"
-	EQ     = "=="
-	NOT_EQ = "!="
+	REGEX  // ~
+	EQ     // ==
+	NOT_EQ // !=
 
-	AND = "&&"
-	OR  = "||"
+	AND // &&
+	OR  // ||
 
 	// Delimiters
-	COMMA     = ","
-	SEMICOLON = ";"
-	COLON     = ":"
+	COMMA     // ,
+	SEMICOLON // ;
+	COLON     // :
 
-	LPAREN   = "("
-	RPAREN   = ")"
-	LBRACE   = "{"
-	RBRACE   = "}"
-	LBRACKET = "["
-	RBRACKET = "]"
+	LPAREN   // (
+	RPAREN   // )
+	LBRACE   // {
+	RBRACE   // }
+	LBRACKET // [
+	RBRACKET // ]
 
 	// Keywords
-	FUNCTION = "FUNCTION"
-	LET      = "LET"
-	TRUE     = "TRUE"
-	FALSE    = "FALSE"
-	IF       = "IF"
-	ELSE     = "ELSE"
-	RETURN   = "RETURN"
+	FUNCTION // FUNCTION
+	LET      // LET
+	TRUE     // TRUE
+	FALSE    // FALSE
+	IF       // IF
+	ELSE     // ELSE
+	RETURN   // RETURN
 
-	NUMERIC_SUFFIX = "NUMERIC_SUFFIX"
+	NUMERIC_SUFFIX // NUMERIC_SUFFIX
 )
 
+var tokStrings = []string{
+	"ILLEGAL",
+	"EOF",
+
+	// Identifiers + literals
+	"IDENT",
+	"INT",
+	"STRING",
+
+	// Operators
+	"=",
+	"+",
+	"-",
+	"!",
+	"*",
+	"/",
+
+	"<",
+	">",
+
+	"~",
+	"==",
+	"!=",
+
+	"&&",
+	"||",
+
+	// Delimiters
+	",",
+	";",
+	":",
+
+	"(",
+	")",
+	"{",
+	"}",
+	"[",
+	"]",
+
+	// Keywords
+	"FUNCTION",
+	"LET",
+	"TRUE",
+	"FALSE",
+	"IF",
+	"ELSE",
+	"RETURN",
+
+	"NUMERIC SUFFIX",
+}
+
+func (t Type) String() string {
+	return tokStrings[t]
+}
+func (t Token) String() string {
+	return t.Type.String()
+}
+
 type Token struct {
-	Type    TokenType
+	Type    Type
 	Literal string
 }
 
-var keywords = map[string]TokenType{
+var keywords = map[string]Type{
 	"fn":     FUNCTION,
 	"let":    LET,
 	"true":   TRUE,
@@ -68,7 +126,7 @@ var keywords = map[string]TokenType{
 	"return": RETURN,
 }
 
-var numericSuffixes = map[string]TokenType{
+var numericSuffixes = map[string]Type{
 	"KB":  NUMERIC_SUFFIX,
 	"KiB": NUMERIC_SUFFIX,
 	"MB":  NUMERIC_SUFFIX,
@@ -79,7 +137,7 @@ var numericSuffixes = map[string]TokenType{
 	"TiB": NUMERIC_SUFFIX,
 }
 
-func LookupIdent(ident string) TokenType {
+func LookupIdent(ident string) Type {
 	if tok, ok := keywords[ident]; ok {
 		return tok
 	}

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/shric/monkey/token"
+
 	"github.com/shric/monkey/ast"
 	"github.com/shric/monkey/lexer"
 )
@@ -142,16 +144,16 @@ func TestIntegerLiteralExpression(t *testing.T) {
 
 func TestParsingPrefixExpressions(t *testing.T) {
 	prefixTests := []struct {
-		input    string
-		operator string
-		value    interface{}
+		input string
+		tok   token.Type
+		value interface{}
 	}{
-		{"!5;", "!", 5},
-		{"-15;", "-", 15},
-		{"!foobar;", "!", "foobar"},
-		{"-foobar;", "-", "foobar"},
-		{"!true;", "!", true},
-		{"!false;", "!", false},
+		{"!5;", token.BANG, 5},
+		{"-15;", token.MINUS, 15},
+		{"!foobar;", token.BANG, "foobar"},
+		{"-foobar;", token.MINUS, "foobar"},
+		{"!true;", token.BANG, true},
+		{"!false;", token.BANG, false},
 	}
 
 	for _, tt := range prefixTests {
@@ -175,9 +177,9 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		if !ok {
 			t.Fatalf("stmt is not ast.PrefixExpression. got=%T", stmt.Expression)
 		}
-		if exp.Operator != tt.operator {
+		if exp.Token.Type != tt.tok {
 			t.Fatalf("exp.Operator is not '%s'. got=%s",
-				tt.operator, exp.Operator)
+				tt.tok, exp.Token.Type.String())
 		}
 		if !testLiteralExpression(t, exp.Right, tt.value) {
 			return
@@ -189,28 +191,28 @@ func TestParsingInfixExpressions(t *testing.T) {
 	infixTests := []struct {
 		input      string
 		leftValue  interface{}
-		operator   string
+		tok        token.Type
 		rightValue interface{}
 	}{
-		{"5 + 5;", 5, "+", 5},
-		{"5 - 5;", 5, "-", 5},
-		{"5 * 5;", 5, "*", 5},
-		{"5 / 5;", 5, "/", 5},
-		{"5 > 5;", 5, ">", 5},
-		{"5 < 5;", 5, "<", 5},
-		{"5 == 5;", 5, "==", 5},
-		{"5 != 5;", 5, "!=", 5},
-		{"foobar + barfoo;", "foobar", "+", "barfoo"},
-		{"foobar - barfoo;", "foobar", "-", "barfoo"},
-		{"foobar * barfoo;", "foobar", "*", "barfoo"},
-		{"foobar / barfoo;", "foobar", "/", "barfoo"},
-		{"foobar > barfoo;", "foobar", ">", "barfoo"},
-		{"foobar < barfoo;", "foobar", "<", "barfoo"},
-		{"foobar == barfoo;", "foobar", "==", "barfoo"},
-		{"foobar != barfoo;", "foobar", "!=", "barfoo"},
-		{"true == true", true, "==", true},
-		{"true != false", true, "!=", false},
-		{"false == false", false, "==", false},
+		{"5 + 5;", 5, token.PLUS, 5},
+		{"5 - 5;", 5, token.MINUS, 5},
+		{"5 * 5;", 5, token.ASTERISK, 5},
+		{"5 / 5;", 5, token.SLASH, 5},
+		{"5 > 5;", 5, token.GT, 5},
+		{"5 < 5;", 5, token.LT, 5},
+		{"5 == 5;", 5, token.EQ, 5},
+		{"5 != 5;", 5, token.NOT_EQ, 5},
+		{"foobar + barfoo;", "foobar", token.PLUS, "barfoo"},
+		{"foobar - barfoo;", "foobar", token.MINUS, "barfoo"},
+		{"foobar * barfoo;", "foobar", token.ASTERISK, "barfoo"},
+		{"foobar / barfoo;", "foobar", token.SLASH, "barfoo"},
+		{"foobar > barfoo;", "foobar", token.GT, "barfoo"},
+		{"foobar < barfoo;", "foobar", token.LT, "barfoo"},
+		{"foobar == barfoo;", "foobar", token.EQ, "barfoo"},
+		{"foobar != barfoo;", "foobar", token.NOT_EQ, "barfoo"},
+		{"true == true", true, token.EQ, true},
+		{"true != false", true, token.NOT_EQ, false},
+		{"false == false", false, token.EQ, false},
 	}
 
 	for _, tt := range infixTests {
@@ -231,7 +233,7 @@ func TestParsingInfixExpressions(t *testing.T) {
 		}
 
 		if !testInfixExpression(t, stmt.Expression, tt.leftValue,
-			tt.operator, tt.rightValue) {
+			tt.tok, tt.rightValue) {
 			return
 		}
 	}
@@ -427,7 +429,7 @@ func TestIfExpression(t *testing.T) {
 			stmt.Expression)
 	}
 
-	if !testInfixExpression(t, exp.Condition, "x", "<", "y") {
+	if !testInfixExpression(t, exp.Condition, "x", token.LT, "y") {
 		return
 	}
 
@@ -475,7 +477,7 @@ func TestIfElseExpression(t *testing.T) {
 		t.Fatalf("stmt.Expression is not ast.IfExpression. got=%T", stmt.Expression)
 	}
 
-	if !testInfixExpression(t, exp.Condition, "x", "<", "y") {
+	if !testInfixExpression(t, exp.Condition, "x", token.LT, "y") {
 		return
 	}
 
@@ -554,7 +556,7 @@ func TestFunctionLiteralParsing(t *testing.T) {
 			function.Body.Statements[0])
 	}
 
-	testInfixExpression(t, bodyStmt.Expression, "x", "+", "y")
+	testInfixExpression(t, bodyStmt.Expression, "x", token.PLUS, "y")
 }
 
 func TestFunctionParameterParsing(t *testing.T) {
@@ -621,8 +623,8 @@ func TestCallExpressionParsing(t *testing.T) {
 	}
 
 	testLiteralExpression(t, exp.Arguments[0], 1)
-	testInfixExpression(t, exp.Arguments[1], 2, "*", 3)
-	testInfixExpression(t, exp.Arguments[2], 4, "+", 5)
+	testInfixExpression(t, exp.Arguments[1], 2, token.ASTERISK, 3)
+	testInfixExpression(t, exp.Arguments[2], 4, token.PLUS, 5)
 }
 
 func TestCallExpressionParameterParsing(t *testing.T) {
@@ -736,8 +738,8 @@ func TestParsingArrayLiterals(t *testing.T) {
 	}
 
 	testIntegerLiteral(t, array.Elements[0], 1)
-	testInfixExpression(t, array.Elements[1], 2, "*", 2)
-	testInfixExpression(t, array.Elements[2], 3, "+", 3)
+	testInfixExpression(t, array.Elements[1], 2, token.ASTERISK, 2)
+	testInfixExpression(t, array.Elements[2], 3, token.PLUS, 3)
 }
 
 func TestParsingIndexExpressions(t *testing.T) {
@@ -758,7 +760,7 @@ func TestParsingIndexExpressions(t *testing.T) {
 		return
 	}
 
-	if !testInfixExpression(t, indexExp.Index, 1, "+", 1) {
+	if !testInfixExpression(t, indexExp.Index, 1, token.PLUS, 1) {
 		return
 	}
 }
@@ -910,13 +912,13 @@ func TestParsingHashLiteralsWithExpressions(t *testing.T) {
 
 	tests := map[string]func(ast.Expression){
 		"one": func(e ast.Expression) {
-			testInfixExpression(t, e, 0, "+", 1)
+			testInfixExpression(t, e, 0, token.PLUS, 1)
 		},
 		"two": func(e ast.Expression) {
-			testInfixExpression(t, e, 10, "-", 8)
+			testInfixExpression(t, e, 10, token.MINUS, 8)
 		},
 		"three": func(e ast.Expression) {
-			testInfixExpression(t, e, 15, "/", 5)
+			testInfixExpression(t, e, 15, token.SLASH, 5)
 		},
 	}
 
@@ -964,7 +966,7 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 }
 
 func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
-	operator string, right interface{}) bool {
+	tok token.Type, right interface{}) bool {
 
 	opExp, ok := exp.(*ast.InfixExpression)
 	if !ok {
@@ -976,8 +978,8 @@ func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
 		return false
 	}
 
-	if opExp.Operator != operator {
-		t.Errorf("exp.Operator is not '%s'. got=%q", operator, opExp.Operator)
+	if opExp.Token.Type != tok {
+		t.Errorf("exp.Operator is not '%s'. got=%q", tok, opExp.Token)
 		return false
 	}
 

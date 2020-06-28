@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/shric/monkey/token"
+
 	"github.com/shric/monkey/ast"
 	"github.com/shric/monkey/object"
 )
@@ -56,7 +58,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(right) {
 			return right
 		}
-		return evalPrefixExpression(node.Operator, right)
+		return evalPrefixExpression(node.Token, right)
 
 	case *ast.InfixExpression:
 		left := Eval(node.Left, env)
@@ -69,7 +71,7 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return right
 		}
 
-		return evalInfixExpression(node.Operator, left, right)
+		return evalInfixExpression(node.Token, left, right)
 
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
@@ -165,38 +167,38 @@ func nativeBoolToBooleanObject(input bool) *object.Boolean {
 	return FALSE
 }
 
-func evalPrefixExpression(operator string, right object.Object) object.Object {
-	switch operator {
-	case "!":
+func evalPrefixExpression(tok token.Token, right object.Object) object.Object {
+	switch tok.Type {
+	case token.BANG:
 		return evalBangOperatorExpression(right)
-	case "-":
+	case token.MINUS:
 		return evalMinusPrefixOperatorExpression(right)
 	default:
-		return newError("unknown operator: %s%s", operator, right.Type())
+		return newError("unknown operator: %s%s", tok, right.Type())
 	}
 }
 
 func evalInfixExpression(
-	operator string,
+	tok token.Token,
 	left, right object.Object,
 ) object.Object {
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
-		return evalIntegerInfixExpression(operator, left, right)
+		return evalIntegerInfixExpression(tok, left, right)
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
-		return evalStringInfixExpression(operator, left, right)
-	case operator == "==":
+		return evalStringInfixExpression(tok, left, right)
+	case tok.Type == token.EQ:
 		return nativeBoolToBooleanObject(left == right)
-	case operator == "!=":
+	case tok.Type == token.NOT_EQ:
 		return nativeBoolToBooleanObject(left != right)
 	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:
-		return evalBooleanInfixExpression(operator, left, right)
+		return evalBooleanInfixExpression(tok, left, right)
 	case left.Type() != right.Type():
 		return newError("type mismatch: %s %s %s",
-			left.Type(), operator, right.Type())
+			left.Type(), tok.Type, right.Type())
 	default:
-		return newError("unknown operator: %s %s %s",
-			left.Type(), operator, right.Type())
+		return newError("unknown token: %s %s %s",
+			left.Type(), tok.Literal, right.Type())
 	}
 }
 
@@ -224,69 +226,69 @@ func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
 }
 
 func evalBooleanInfixExpression(
-	operator string,
+	tok token.Token,
 	left, right object.Object,
 ) object.Object {
 	leftVal := left.(*object.Boolean).Value
 	rightVal := right.(*object.Boolean).Value
-	switch operator {
-	case "&&":
+	switch tok.Type {
+	case token.AND:
 		return &object.Boolean{Value: leftVal && rightVal}
-	case "||":
+	case token.OR:
 		return &object.Boolean{Value: leftVal || rightVal}
 	default:
 		return newError("unknown operator: %s %s %s",
-			left.Type(), operator, right.Type())
+			left.Type(), tok.Type, right.Type())
 	}
 }
 
 func evalIntegerInfixExpression(
-	operator string,
+	tok token.Token,
 	left, right object.Object,
 ) object.Object {
 	leftVal := left.(*object.Integer).Value
 	rightVal := right.(*object.Integer).Value
 
-	switch operator {
-	case "+":
+	switch tok.Type {
+	case token.PLUS:
 		return &object.Integer{Value: leftVal + rightVal}
-	case "-":
+	case token.MINUS:
 		return &object.Integer{Value: leftVal - rightVal}
-	case "*":
+	case token.ASTERISK:
 		return &object.Integer{Value: leftVal * rightVal}
-	case "/":
+	case token.SLASH:
 		if rightVal == 0 {
 			return newError("Integer division by zero: %d/0", leftVal)
 		}
 		return &object.Integer{Value: leftVal / rightVal}
-	case "<":
+	case token.LT:
 		return nativeBoolToBooleanObject(leftVal < rightVal)
-	case ">":
+	case token.GT:
 		return nativeBoolToBooleanObject(leftVal > rightVal)
-	case "==":
+	case token.EQ:
 		return nativeBoolToBooleanObject(leftVal == rightVal)
-	case "!=":
+	case token.NOT_EQ:
 		return nativeBoolToBooleanObject(leftVal != rightVal)
 	default:
 		return newError("unknown operator: %s %s %s",
-			left.Type(), operator, right.Type())
+			left.Type(), tok.Type, right.Type())
 	}
 }
 
 func evalStringInfixExpression(
-	operator string,
+	tok token.Token,
 	left, right object.Object,
 ) object.Object {
 	leftVal := left.(*object.String).Value
 	rightVal := right.(*object.String).Value
-	switch operator {
-	case "+":
+	switch tok.Type {
+	case token.PLUS:
 		return &object.String{Value: leftVal + rightVal}
-	case "==":
+	case token.EQ:
 		return &object.Boolean{Value: leftVal == rightVal}
-	case "!=":
+	case token.NOT_EQ:
 		return &object.Boolean{Value: leftVal != rightVal}
-	case "~":
+	case token.REGEX:
 		re, err := regexp.Compile(rightVal)
 		if err != nil {
 			return newError("%v", err)
@@ -294,7 +296,7 @@ func evalStringInfixExpression(
 		return nativeBoolToBooleanObject(re.MatchString(leftVal))
 	default:
 		return newError("unknown operator: %s %s %s",
-			left.Type(), operator, right.Type())
+			left.Type(), tok.Type, right.Type())
 	}
 }
 

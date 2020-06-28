@@ -174,6 +174,6 @@ func isLetter(ch rune) bool {
 	return unicode.IsLetter(ch) || ch == '_'
 }
 
-func newToken(tokenType token.TokenType, ch rune) token.Token {
+func newToken(tokenType token.Type, ch rune) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
 }

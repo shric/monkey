@@ -153,9 +153,8 @@ func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return il.Token.Literal }
 
 type PrefixExpression struct {
-	Token    token.Token // The prefix token, e.g. !
-	Operator string
-	Right    Expression
+	Token token.Token // The prefix token, e.g. !
+	Right Expression
 }
 
 func (pe *PrefixExpression) expressionNode()      {}
@@ -164,7 +163,7 @@ func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(pe.Operator)
+	out.WriteString(pe.Token.Type.String())
 	out.WriteString(pe.Right.String())
 	out.WriteString(")")
 
@@ -172,10 +171,9 @@ func (pe *PrefixExpression) String() string {
 }
 
 type InfixExpression struct {
-	Token    token.Token // The operator token, e.g. +
-	Left     Expression
-	Operator string
-	Right    Expression
+	Token token.Token // The operator token, e.g. +
+	Left  Expression
+	Right Expression
 }
 
 func (ie *InfixExpression) expressionNode()      {}
@@ -185,7 +183,7 @@ func (ie *InfixExpression) String() string {
 
 	out.WriteString("(")
 	out.WriteString(ie.Left.String())
-	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(" " + ie.Token.Type.String() + " ")
 	out.WriteString(ie.Right.String())
 	out.WriteString(")")
 
