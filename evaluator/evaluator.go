@@ -2,7 +2,6 @@ package evaluator
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/shric/monkey/token"
 
@@ -46,6 +45,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	// Expressions
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+
+	case *ast.FloatLiteral:
+		return &object.Float{Value: node.Value}
 
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
@@ -178,30 +180,6 @@ func evalPrefixExpression(tok token.Token, right object.Object) object.Object {
 	}
 }
 
-func evalInfixExpression(
-	tok token.Token,
-	left, right object.Object,
-) object.Object {
-	switch {
-	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
-		return evalIntegerInfixExpression(tok, left, right)
-	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
-		return evalStringInfixExpression(tok, left, right)
-	case tok.Type == token.EQ:
-		return nativeBoolToBooleanObject(left == right)
-	case tok.Type == token.NOT_EQ:
-		return nativeBoolToBooleanObject(left != right)
-	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:
-		return evalBooleanInfixExpression(tok, left, right)
-	case left.Type() != right.Type():
-		return newError("type mismatch: %s %s %s",
-			left.Type(), tok.Type, right.Type())
-	default:
-		return newError("unknown token: %s %s %s",
-			left.Type(), tok.Literal, right.Type())
-	}
-}
-
 func evalBangOperatorExpression(right object.Object) object.Object {
 	if right == nil {
 		return newError("Only boolean and integer supported for ! operator, got: null")
@@ -217,87 +195,13 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 }
 
 func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
-	if right.Type() != object.INTEGER_OBJ {
-		return newError("unknown operator: -%s", right.Type())
+	switch right.Type() {
+	case object.INTEGER_OBJ:
+		return &object.Integer{Value: -right.(*object.Integer).Value}
+	case object.FLOAT_OBJ:
+		return &object.Float{Value: -right.(*object.Float).Value}
 	}
-
-	value := right.(*object.Integer).Value
-	return &object.Integer{Value: -value}
-}
-
-func evalBooleanInfixExpression(
-	tok token.Token,
-	left, right object.Object,
-) object.Object {
-	leftVal := left.(*object.Boolean).Value
-	rightVal := right.(*object.Boolean).Value
-	switch tok.Type {
-	case token.AND:
-		return &object.Boolean{Value: leftVal && rightVal}
-	case token.OR:
-		return &object.Boolean{Value: leftVal || rightVal}
-	default:
-		return newError("unknown operator: %s %s %s",
-			left.Type(), tok.Type, right.Type())
-	}
-}
-
-func evalIntegerInfixExpression(
-	tok token.Token,
-	left, right object.Object,
-) object.Object {
-	leftVal := left.(*object.Integer).Value
-	rightVal := right.(*object.Integer).Value
-
-	switch tok.Type {
-	case token.PLUS:
-		return &object.Integer{Value: leftVal + rightVal}
-	case token.MINUS:
-		return &object.Integer{Value: leftVal - rightVal}
-	case token.ASTERISK:
-		return &object.Integer{Value: leftVal * rightVal}
-	case token.SLASH:
-		if rightVal == 0 {
-			return newError("Integer division by zero: %d/0", leftVal)
-		}
-		return &object.Integer{Value: leftVal / rightVal}
-	case token.LT:
-		return nativeBoolToBooleanObject(leftVal < rightVal)
-	case token.GT:
-		return nativeBoolToBooleanObject(leftVal > rightVal)
-	case token.EQ:
-		return nativeBoolToBooleanObject(leftVal == rightVal)
-	case token.NOT_EQ:
-		return nativeBoolToBooleanObject(leftVal != rightVal)
-	default:
-		return newError("unknown operator: %s %s %s",
-			left.Type(), tok.Type, right.Type())
-	}
-}
-
-func evalStringInfixExpression(
-	tok token.Token,
-	left, right object.Object,
-) object.Object {
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.String).Value
-	switch tok.Type {
-	case token.PLUS:
-		return &object.String{Value: leftVal + rightVal}
-	case token.EQ:
-		return &object.Boolean{Value: leftVal == rightVal}
-	case token.NOT_EQ:
-		return &object.Boolean{Value: leftVal != rightVal}
-	case token.REGEX:
-		re, err := regexp.Compile(rightVal)
-		if err != nil {
-			return newError("%v", err)
-		}
-		return nativeBoolToBooleanObject(re.MatchString(leftVal))
-	default:
-		return newError("unknown operator: %s %s %s",
-			left.Type(), tok.Type, right.Type())
-	}
+	return newError("unknown operator: -%s", right.Type())
 }
 
 func evalIfExpression(

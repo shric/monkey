@@ -8,7 +8,7 @@ const (
 
 	// Identifiers + literals
 	IDENT  // add, foobar, x, y, ...
-	INT    // 1343456
+	NUMBER // 1343456
 	STRING // "foobar"
 
 	// Operators
@@ -59,7 +59,7 @@ var tokStrings = []string{
 
 	// Identifiers + literals
 	"IDENT",
-	"INT",
+	"NUMBER",
 	"STRING",
 
 	// Operators
@@ -84,6 +84,7 @@ var tokStrings = []string{
 	",",
 	";",
 	":",
+	".",
 
 	"(",
 	")",

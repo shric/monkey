@@ -105,8 +105,8 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Literal = l.readIdentifier()
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
-		} else if unicode.IsDigit(l.ch) {
-			tok.Type = token.INT
+		} else if unicode.IsDigit(l.ch) || l.ch == '.' {
+			tok.Type = token.NUMBER
 			tok.Literal = l.readNumber()
 			return tok
 		} else {
@@ -153,7 +153,7 @@ func (l *Lexer) readIdentifier() string {
 
 func (l *Lexer) readNumber() string {
 	position := l.position
-	for unicode.IsDigit(l.ch) {
+	for unicode.IsDigit(l.ch) || l.ch == '.' {
 		l.readRune()
 	}
 	return l.input[position:l.position]

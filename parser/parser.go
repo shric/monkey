@@ -63,7 +63,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixParseFns = make(map[token.Type]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
-	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.NUMBER, p.parseNumericLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
@@ -265,29 +265,38 @@ var numericSuffixMultipliers = map[string]int64{
 	"TiB": 1 << 40,
 }
 
-func (p *Parser) parseIntegerLiteral() ast.Expression {
-	lit := &ast.IntegerLiteral{Token: p.curToken}
-
-	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
-	if err != nil {
-		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
-		p.errors = append(p.errors, msg)
-		return nil
-	}
-	if p.peekTokenIs(token.NUMERIC_SUFFIX) {
-		p.nextToken()
-		if val, ok := numericSuffixMultipliers[p.curToken.Literal]; ok {
-			value *= val
-		} else {
-			msg := fmt.Sprintf("Unhandled integet suffix #{p.curToken.Literal}")
-			p.errors = append(p.errors, msg)
-			return nil
+func (p *Parser) parseNumericLiteral() ast.Expression {
+	if intValue, err := strconv.ParseInt(p.curToken.Literal, 0, 64); err == nil {
+		if p.peekTokenIs(token.NUMERIC_SUFFIX) {
+			p.nextToken()
+			if val, ok := numericSuffixMultipliers[p.curToken.Literal]; ok {
+				intValue *= val
+			} else {
+				msg := fmt.Sprintf("Unhandled suffix #{p.curToken.Literal}")
+				p.errors = append(p.errors, msg)
+				return nil
+			}
 		}
+		return &ast.IntegerLiteral{Token: p.curToken, Value: intValue}
 	}
 
-	lit.Value = value
+	if floatValue, err := strconv.ParseFloat(p.curToken.Literal, 64); err == nil {
+		if p.peekTokenIs(token.NUMERIC_SUFFIX) {
+			p.nextToken()
+			if val, ok := numericSuffixMultipliers[p.curToken.Literal]; ok {
+				floatValue *= float64(val)
+			} else {
+				msg := fmt.Sprintf("Unhandled suffix #{p.curToken.Literal}")
+				p.errors = append(p.errors, msg)
+				return nil
+			}
+		}
+		return &ast.FloatLiteral{Token: p.curToken, Value: floatValue}
+	}
 
-	return lit
+	msg := fmt.Sprintf("could not parse %q as integer or float", p.curToken.Literal)
+	p.errors = append(p.errors, msg)
+	return nil
 }
 
 func (p *Parser) parseStringLiteral() ast.Expression {
